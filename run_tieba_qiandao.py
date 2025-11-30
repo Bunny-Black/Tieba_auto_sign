@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
         # 批量获取当前页所有吧链接，避免固定索引导致越界异常
         link_eles = page.eles('xpath://*[@id="like_pagelet"]/div[1]/div[1]/table/tbody/tr/td[1]/a')
-        print(link_eles)
+        # print(link_eles)
         # 如果当前页没有任何吧链接，则认为没有更多数据，结束循环
         if not link_eles:
             msg = f"全部爬取完成！本次总共签到 {count} 个吧..."
