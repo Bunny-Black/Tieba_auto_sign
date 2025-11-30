@@ -104,11 +104,11 @@ if __name__ == "__main__":
 
                     # 点击一次并等待结果
                     sign_ele.click()
-                    time.sleep(1)
+                    time.sleep(2)
                     sign_ele.click()
-                    time.sleep(1)
+                    time.sleep(2)
                     sign_ele.click()
-                    time.sleep(1)
+                    time.sleep(2)
 
                     # 刷新并等待加载完成
                     page.refresh()
@@ -126,9 +126,9 @@ if __name__ == "__main__":
                             break
                         if sign_ele_retry:
                             sign_ele_retry.click()
-                            time.sleep(1)  # 等待签到动作完成
+                            time.sleep(2)  # 等待签到动作完成
                             sign_ele_retry.click()
-                            time.sleep(1)  # 等待签到动作完成
+                            time.sleep(2)  # 等待签到动作完成
                             page.refresh()
 
                         page._wait_loaded(15)
