@@ -55,29 +55,30 @@ if __name__ == "__main__":
     while not over:
         yeshu += 1
         page.get(f"https://tieba.baidu.com/i/i/forum?&pn={yeshu}")
-
         page._wait_loaded(15)
 
-        for i in range(2, 22):
-            element = page.ele(
-                f'xpath://*[@id="like_pagelet"]/div[1]/div[1]/table/tbody/tr[{i}]/td[1]/a/@href'
-            )
-            try:
-                tieba_url = element.attr("href")
-                name = element.attr("title")
-            except:
-                msg = f"全部爬取完成！本次总共签到 {count} 个吧..."
-                print(msg)
-                notice += msg + '\n\n'
-                page.close()
-                over = True
-                break
+        # 批量获取当前页所有吧链接，避免固定索引导致越界异常
+        link_eles = page.eles('xpath://*[@id="like_pagelet"]/div[1]/div[1]/table/tbody/tr/td[1]/a')
+
+        # 如果当前页没有任何吧链接，则认为没有更多数据，结束循环
+        if not link_eles:
+            msg = f"全部爬取完成！本次总共签到 {count} 个吧..."
+            print(msg)
+            notice += msg + '\n\n'
+            page.close()
+            over = True
+            break
+
+        for element in link_eles:
+            tieba_url = element.attr("href")
+            name = element.attr("title") or "未知吧"
+
+            if not tieba_url:
+                # 跳过异常元素，不直接结束
+                continue
 
             page.get(tieba_url)
-            
-
-            page.wait.eles_loaded('xpath://*[@id="signstar_wrapper"]/a/span[1]',timeout=30)
-
+            page.wait.eles_loaded('xpath://*[@id="signstar_wrapper"]/a/span[1]', timeout=30)
 
             # 判断是否签到
             is_sign_ele = page.ele('xpath://*[@id="signstar_wrapper"]/a/span[1]')
@@ -89,15 +90,14 @@ if __name__ == "__main__":
                 notice += msg + '\n\n'
                 print("-------------------------------------------------")
             else:
-                page.wait.eles_loaded('xpath://a[@class="j_signbtn sign_btn_bright j_cansign"]',timeout=30)
+                page.wait.eles_loaded('xpath://a[@class="j_signbtn sign_btn_bright j_cansign"]', timeout=30)
                 sign_ele = page.ele('xpath://a[@class="j_signbtn sign_btn_bright j_cansign"]')
                 if sign_ele:
                     sign_ele.click()
-                    time.sleep(1)  # 等待签到动作完成
+                    time.sleep(1)
                     sign_ele.click()
-                    time.sleep(1)  # 等待签到动作完成
+                    time.sleep(1)
                     page.refresh()
-
                     page._wait_loaded(15)
 
                     level, exp = get_level_exp(page)
