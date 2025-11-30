@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
 
     over = False
-    yeshu = 6
+    yeshu = 0
     count = 0
 
     while not over:
