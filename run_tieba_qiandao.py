@@ -105,6 +105,10 @@ if __name__ == "__main__":
                     # 点击一次并等待结果
                     sign_ele.click()
                     time.sleep(1)
+                    sign_ele.click()
+                    time.sleep(1)
+                    sign_ele.click()
+                    time.sleep(1)
 
                     # 刷新并等待加载完成
                     page.refresh()
@@ -120,9 +124,13 @@ if __name__ == "__main__":
                         sign_ele_retry = page.ele('xpath://a[@class="j_signbtn sign_btn_bright j_cansign"]')
                         if not sign_ele_retry:
                             break
-                        sign_ele_retry.click()
-                        time.sleep(1)
-                        page.refresh()
+                        if sign_ele_retry:
+                            sign_ele_retry.click()
+                            time.sleep(1)  # 等待签到动作完成
+                            sign_ele_retry.click()
+                            time.sleep(1)  # 等待签到动作完成
+                            page.refresh()
+
                         page._wait_loaded(15)
                         level_after, exp_after = get_level_exp(page)
                         retries += 1
