@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
         # 批量获取当前页所有吧链接，避免固定索引导致越界异常
         link_eles = page.eles('xpath://*[@id="like_pagelet"]/div[1]/div[1]/table/tbody/tr/td[1]/a')
-
+        print(link_eles)
         # 如果当前页没有任何吧链接，则认为没有更多数据，结束循环
         if not link_eles:
             msg = f"全部爬取完成！本次总共签到 {count} 个吧..."
@@ -100,10 +100,12 @@ if __name__ == "__main__":
                 sign_ele = page.ele('xpath://a[@class="j_signbtn sign_btn_bright j_cansign"]')
                 if sign_ele:
                     sign_ele.click()
-                    time.sleep(1)
+                    time.sleep(1)  # 等待签到动作完成
+                    sign_ele.click()
+                    time.sleep(1)  # 等待签到动作完成
                     page.refresh()
-                    page._wait_loaded(15)
 
+                    page._wait_loaded(15)
                     level, exp = get_level_exp(page)
                     msg = f"{name}吧：成功！等级：{level}，经验：{exp}"
                     print(msg)
