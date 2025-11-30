@@ -102,11 +102,7 @@ if __name__ == "__main__":
                     # 记录签到前经验
                     level, exp_before = get_level_exp(page)
 
-                    # 点击一次并等待结果
-                    sign_ele.click()
-                    time.sleep(2)
-                    sign_ele.click()
-                    time.sleep(2)
+                    # 点击一次并等待，不要连点
                     sign_ele.click()
                     time.sleep(2)
 
@@ -125,8 +121,6 @@ if __name__ == "__main__":
                         if not sign_ele_retry:
                             break
                         if sign_ele_retry:
-                            sign_ele_retry.click()
-                            time.sleep(2)  # 等待签到动作完成
                             sign_ele_retry.click()
                             time.sleep(2)  # 等待签到动作完成
                             page.refresh()
