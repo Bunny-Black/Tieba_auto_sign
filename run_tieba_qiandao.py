@@ -69,13 +69,19 @@ if __name__ == "__main__":
             over = True
             break
 
+        # 先快照采集链接与标题，避免后续页面跳转导致元素失效（ElementLostError）
+        href_items = []
         for element in link_eles:
-            tieba_url = element.attr("href")
-            name = element.attr("title") or "未知吧"
-
-            if not tieba_url:
-                # 跳过异常元素，不直接结束
+            try:
+                url = element.attr("href")
+                title = element.attr("title") or "未知吧"
+                if url:
+                    href_items.append((url, title))
+            except Exception:
+                # 元素在采集阶段失效则跳过，不影响整体
                 continue
+
+        for tieba_url, name in href_items:
 
             page.get(tieba_url)
             page.wait.eles_loaded('xpath://*[@id="signstar_wrapper"]/a/span[1]', timeout=30)
@@ -93,8 +99,6 @@ if __name__ == "__main__":
                 page.wait.eles_loaded('xpath://a[@class="j_signbtn sign_btn_bright j_cansign"]', timeout=30)
                 sign_ele = page.ele('xpath://a[@class="j_signbtn sign_btn_bright j_cansign"]')
                 if sign_ele:
-                    sign_ele.click()
-                    time.sleep(1)
                     sign_ele.click()
                     time.sleep(1)
                     page.refresh()
