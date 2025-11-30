@@ -4,6 +4,7 @@ import os
 import shutil
 import time
 import requests
+import random
 
 def read_cookie():
     """读取 cookie，优先从环境变量读取"""
@@ -49,7 +50,7 @@ if __name__ == "__main__":
 
 
     over = False
-    yeshu = 5
+    yeshu = 6
     count = 0
 
     while not over:
@@ -59,7 +60,7 @@ if __name__ == "__main__":
 
         # 批量获取当前页所有吧链接，避免固定索引导致越界异常
         link_eles = page.eles('xpath://*[@id="like_pagelet"]/div[1]/div[1]/table/tbody/tr/td[1]/a')
-        print(link_eles)
+        # print(link_eles)
         # 如果当前页没有任何吧链接，则认为没有更多数据，结束循环
         if not link_eles:
             msg = f"全部爬取完成！本次总共签到 {count} 个吧..."
@@ -96,38 +97,79 @@ if __name__ == "__main__":
                 notice += msg + '\n\n'
                 print("-------------------------------------------------")
             else:
-                page.wait.eles_loaded('xpath://a[@class="j_signbtn sign_btn_bright j_cansign"]', timeout=30)
-                sign_ele = page.ele('xpath://a[@class="j_signbtn sign_btn_bright j_cansign"]')
+                # 候选签到按钮选择器，兼容不同吧的样式差异
+                sign_selectors = [
+                    'xpath://a[@class="j_signbtn sign_btn_bright j_cansign"]',
+                    'xpath://a[contains(@class, "j_cansign")]',
+                    'xpath://a[contains(@class, "sign_btn_bright")]',
+                    'xpath://button[contains(@class, "sign")]'
+                ]
+                # 等待任一候选按钮出现
+                page.wait.eles_loaded('xpath://*[@id="signstar_wrapper"]', timeout=30)
+                sign_ele = None
+                for sel in sign_selectors:
+                    sign_ele = page.ele(sel)
+                    if sign_ele:
+                        break
                 if sign_ele:
-                    # 记录签到前经验
+                    # 记录签到前状态与经验
                     level, exp_before = get_level_exp(page)
+                    try:
+                        btn_text_before = sign_ele.text
+                        btn_class_before = sign_ele.attr('class')
+                    except Exception:
+                        btn_text_before = ''
+                        btn_class_before = ''
+                    print(f"签到前按钮：text='{btn_text_before}', class='{btn_class_before}'")
 
-                    # 点击一次并等待，不要连点
+                    # 点击一次并等待随机时间，不要连点
                     sign_ele.click()
-                    time.sleep(2)
+                    time.sleep(random.uniform(1.5, 2.5))
 
                     # 刷新并等待加载完成
                     page.refresh()
                     page._wait_loaded(15)
 
-                    # 重新读取经验，必要时有限重试（避免元素失效与网络抖动）
+                    # 重新读取状态与经验，必要时有限重试（避免元素失效与网络抖动）
                     max_retries = 3
                     retries = 0
                     level_after, exp_after = get_level_exp(page)
-                    while exp_after == exp_before and retries < max_retries:
+                    status_ele = page.ele('xpath://*[@id="signstar_wrapper"]/a/span[1]')
+                    status_text = status_ele.text if status_ele else ''
+                    while (exp_after == exp_before and not (status_text.startswith("连续"))) and retries < max_retries:
                         # 再次尝试点击（需重新获取按钮元素）
-                        page.wait.eles_loaded('xpath://a[@class="j_signbtn sign_btn_bright j_cansign"]', timeout=10)
-                        sign_ele_retry = page.ele('xpath://a[@class="j_signbtn sign_btn_bright j_cansign"]')
+                        sign_ele_retry = None
+                        for sel in sign_selectors:
+                            sign_ele_retry = page.ele(sel)
+                            if sign_ele_retry:
+                                break
                         if not sign_ele_retry:
                             break
                         if sign_ele_retry:
                             sign_ele_retry.click()
-                            time.sleep(2)  # 等待签到动作完成
+                            time.sleep(random.uniform(1.5, 2.5))
                             page.refresh()
 
                         page._wait_loaded(15)
                         level_after, exp_after = get_level_exp(page)
+                        status_ele = page.ele('xpath://*[@id="signstar_wrapper"]/a/span[1]')
+                        status_text = status_ele.text if status_ele else ''
                         retries += 1
+
+                    # 打印签到后按钮信息
+                    status_ele_after = page.ele('xpath://*[@id="signstar_wrapper"]/a/span[1]')
+                    btn_text_after = status_ele_after.text if status_ele_after else ''
+                    # 尝试再次取按钮class（可能不存在）
+                    btn_class_after = ''
+                    for sel in sign_selectors:
+                        tmp = page.ele(sel)
+                        if tmp:
+                            try:
+                                btn_class_after = tmp.attr('class') or ''
+                            except Exception:
+                                btn_class_after = ''
+                            break
+                    print(f"签到后按钮：text='{btn_text_after}', class='{btn_class_after}'")
 
                     msg = f"{name}吧：成功！等级：{level_after}，经验：{exp_before}->{exp_after}"
                     print(msg)
