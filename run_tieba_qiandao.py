@@ -99,24 +99,35 @@ if __name__ == "__main__":
                 page.wait.eles_loaded('xpath://a[@class="j_signbtn sign_btn_bright j_cansign"]', timeout=30)
                 sign_ele = page.ele('xpath://a[@class="j_signbtn sign_btn_bright j_cansign"]')
                 if sign_ele:
-                    level, exp = get_level_exp(page)
-                    sign_ele.click()
-                    time.sleep(1)  # 等待签到动作完成
-                    sign_ele.click()
-                    time.sleep(1)  # 等待签到动作完成
-                    page.refresh()
+                    # 记录签到前经验
+                    level, exp_before = get_level_exp(page)
 
+                    # 点击一次并等待结果
+                    sign_ele.click()
+                    time.sleep(1)
+
+                    # 刷新并等待加载完成
+                    page.refresh()
                     page._wait_loaded(15)
-                    level, exp_new = get_level_exp(page)
-                    while exp_new == exp:
-                        sign_ele.click()
-                        time.sleep(1)  # 等待签到动作完成
-                        sign_ele.click()
-                        time.sleep(1)  # 等待签到动作完成
-                        page.refresh()                        
+
+                    # 重新读取经验，必要时有限重试（避免元素失效与网络抖动）
+                    max_retries = 3
+                    retries = 0
+                    level_after, exp_after = get_level_exp(page)
+                    while exp_after == exp_before and retries < max_retries:
+                        # 再次尝试点击（需重新获取按钮元素）
+                        page.wait.eles_loaded('xpath://a[@class="j_signbtn sign_btn_bright j_cansign"]', timeout=10)
+                        sign_ele_retry = page.ele('xpath://a[@class="j_signbtn sign_btn_bright j_cansign"]')
+                        if not sign_ele_retry:
+                            break
+                        sign_ele_retry.click()
                         time.sleep(1)
-                        level, exp_new = get_level_exp(page)
-                    msg = f"{name}吧：成功！等级：{level}，经验：{exp}->{exp_new}"
+                        page.refresh()
+                        page._wait_loaded(15)
+                        level_after, exp_after = get_level_exp(page)
+                        retries += 1
+
+                    msg = f"{name}吧：成功！等级：{level_after}，经验：{exp_before}->{exp_after}"
                     print(msg)
                     notice += msg + '\n\n'
                     print("-------------------------------------------------")
